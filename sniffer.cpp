@@ -2,16 +2,94 @@
 #include "string.h"
 sniffer::sniffer(int protocol):rawsocket(protocol),max_packet_len(2048)
 {
-    packet=new char[max_packet_len];
+    packet=(char*)malloc(sizeof(char)*max_packet_len);
     memset(&myfiter,0,sizeof(myfiter));
+
+}
+
+sniffer::~sniffer()
+{
 
 }
 
 bool sniffer::sniffer_init()
 {
-    set_dopromisc("eth0");
+   return  set_dopromisc((char*)"enp0s3");
 }
 
+void sniffer::analyze()
+{
+    
+    ether_header_t *etherpacket=(ether_header_t*)packet;
+    printf("MAC:");
+    for(int i=0;i<6;i++)
+    {
+        printf("%.2X:",etherpacket->src_hw_addr[i]&ethernetmask);
+    }
+    printf("-------->");
+       for(int i=0;i<6;i++)
+    {
+        printf("%.2X:",etherpacket->des_hw_addr[i]&ethernetmask);
+    }
+    printf("\n");
+    printf("frametype:");
+    for(int i=0;i<2;i++)
+    {
+         printf("%.2X",etherpacket->frametype[i]&ethernetmask);
+    }
+       printf("\n");
+    ParseIPPacket();
+   
+}
+
+void sniffer::ParseIPPacket()
+{
+        ip_packet_t *ip_header=(ip_packet_t*)packet;
+        printf("IP:");
+        for(int i=0;i<=3;i++)
+        {
+            printf("%d",ip_header->ipheader.ip_src[i]&ethernetmask);
+            if(i!=3)
+            printf(".");
+        }
+        printf("-------->");
+        for(int i=0;i<=3;i++)
+        {
+              printf("%d",ip_header->ipheader.ip_dst[i]&ethernetmask);
+            if(i!=3)
+            printf(".");
+        }
+        printf("\n");
+
+        int  prototype=ip_header->ipheader.ip_p;
+        printf("Protocol: ");
+        switch(prototype)
+        {
+            case IPPROTO_ICMP:
+                printf("ICMP\n");
+                break;
+            case IPPROTO_IGMP:
+                printf("IGMP\n");
+                break;
+            case IPPROTO_IPIP:
+                printf("IP\n");
+                break;
+            case IPPROTO_TCP :
+                printf("TCP\n");
+              
+                break;
+            case IPPROTO_UDP :
+                printf("UDP \n");
+              
+                break;
+            case IPPROTO_RAW :
+                printf("RAW\n");
+                break;
+            default:
+                printf("Unkown\n");
+        }
+      
+}
 
 void  sniffer::sniffer_start()
 {
@@ -30,5 +108,5 @@ void  sniffer::sniffer_start()
             continue;
         }
     }
-
 }
+

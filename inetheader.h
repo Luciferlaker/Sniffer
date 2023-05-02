@@ -30,18 +30,25 @@ typedef struct arp_packet_t   //arp数据包
 typedef struct ip_header_t
 {
 
-    char ip_v[4];                           //版本
-    char ip_hl[4];                         //头部长度
-    char  ip_tos[8];                     //服务类型
-    char  ip_len[16];                   //总长度
-    char ip_id[19];                     //标识值
-    char ip_off[13];                    //片偏移
-    char ip_ttl[8];                        //生存时间
-    char  ip_p[8];                         //协议类型
-    char ip_sum[16];                  //校验和
-    char ip_src[32];                   //源地址                                 
-    char ip_dst[32];                   //目的地址 
+#if __BYTE_ORDER==__LITTLE_ENDIAN
+        char ip_hl:4,           //版本
+        ip_v:4;            //头部长度
+#endif
 
+#if __BYTE_ORDER==__BIG_ENDIAN
+         unsigned int ip_v:4;            //头部长度
+         unsigned int ip_hl:4;           //版本
+#endif
+    char  ip_tos;                     //服务类型
+    char  ip_len[2];                   //总长度
+    char ip_id[2];                     //标识值
+    char ip_off[2];                    //片偏移
+    char ip_ttl;                        //生存时间
+    char  ip_p;                         //协议类型
+    char ip_sum[2];                  //校验和
+    char ip_src[4];                   //源地址                                 
+    char ip_dst[4];                   //目的地址 
+    char ip_type[4];              //选项
 }ip_header_t;
 
 typedef  struct ip_packet_t     //ip数据包头
@@ -53,10 +60,10 @@ typedef  struct ip_packet_t     //ip数据包头
 
 typedef struct udp_header_t
 {
-    char source[16];                        //源地址
-    char dest[16];                         //目的地址
-    char len[16];                           //udp长度
-    char cheack[16];                   //udp校验和
+    char source[2];                        //源地址
+    char dest[2];                         //目的地址
+    char len[2];                           //udp长度
+    char cheack[2];                   //udp校验和
 }udp_header_t;
 
 
@@ -68,23 +75,39 @@ typedef struct udp_packet_t
 
 typedef  struct tcp_header_t
 {
-    char source[16];                //源地址
-    char dest[16];                      //目的地址
-    char seq[32];                       //序列号
-    char ack_seq[32];               //确认序列号
-    char doff[4];                           
-    char res[4];
-    char cwr;
-    char ece;
-    char urg;
-    char ack;
-    char psh;
-    char rst;
-    char syn;
-    char fin;
-    char windows[16];                   //滑动窗口大小
-    char cheack[16];                        //校验和
-    char urg_ptr[16];                       //紧急字段指针
+    char source[2];                //源地址
+    char dest[2];                      //目的地址
+    char seq[4];                       //序列号
+    char ack_seq[4];               //确认序列号
+
+#if __BYTE_ORDER==__LITTLE_ENDIAN
+        __u16 resl:4,
+        doff:4,
+        fin:1,
+        syn:1,
+        rst:1,
+        psh:1,
+        ack:1,
+        urg:1,
+        ece:1,
+        cwr:1;
+#endif
+
+#if __BYTE_ORDER==__BIG_ENDIAN
+     __u16 doff:4,
+     resl:4,
+     cwr:1,
+     ece:1,
+     urg:1,
+     ack:1,
+     psh:1,
+     rst:1,
+     syn:1,
+     fin:1;
+#endif
+    char windows[2];                   //滑动窗口大小
+    char cheack[2];                        //校验和
+    char urg_ptr[2];                       //紧急字段指针
 
 }tcp_header_t;
 
